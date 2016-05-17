@@ -1,17 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using Windows.Devices.Gpio;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -22,9 +12,31 @@ namespace GPIO
     /// </summary>
     public sealed partial class MainPage : Page
     {
+        private readonly GpioPin _ledPin;
+        private readonly GpioPin _switchPin;
+
+
         public MainPage()
         {
-            this.InitializeComponent();
+            InitializeComponent();
+            GpioController gpioController = GpioController.GetDefault();
+            _ledPin = gpioController.OpenPin(4);
+            _ledPin.SetDriveMode(GpioPinDriveMode.Output);
+            _switchPin = gpioController.OpenPin(27);
+            _switchPin.SetDriveMode(GpioPinDriveMode.Input);
+            DispatcherTimer timer = new DispatcherTimer {Interval = TimeSpan.FromMilliseconds(100)};
+            timer.Tick += Timer_Tick;
+            timer.Start();
+        }
+
+        private void Timer_Tick(object sender, object e)
+        {
+            _ledPin.Write(_switchPin.Read());
+        }
+
+        private void toggleSwitch_Toggled(object sender, RoutedEventArgs e)
+        {
+            _ledPin.Write(toggleSwitch.IsOn ? GpioPinValue.High : GpioPinValue.Low);
         }
     }
 }
